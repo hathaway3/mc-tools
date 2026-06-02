@@ -102,6 +102,9 @@ else
     fi
 fi
 
+# Operator prompt
+read -rp "Enter Minecraft username to set as operator/admin (leave empty to skip): " OP_USER
+
 # 5. Determine Java Version (only for Java / Forge)
 JAVA_VERSION=""
 if [ "$TYPE" = "java" ] || [ "$TYPE" = "forge" ]; then
@@ -292,10 +295,31 @@ elif [ "$TYPE" = "forge" ]; then
     cd - > /dev/null
 fi
 
-# 10. Configure EULA (only for Java / Forge)
+# 10. Configure EULA & Operator (only for Java / Forge)
 if [ "$TYPE" = "java" ] || [ "$TYPE" = "forge" ]; then
     echo "eula=true" > "$INSTANCE_DIR/eula.txt"
     echo -e "${GREEN}[+] Accepted Minecraft EULA (eula=true).${NC}"
+    
+    if [ -n "$OP_USER" ]; then
+        echo -e "${BLUE}[*] Resolving Mojang UUID for operator '${OP_USER}'...${NC}"
+        # Fetch profile safely without failing script on HTTP errors
+        set +e
+        PROFILE=$(curl -s --fail "https://api.mojang.com/users/profiles/minecraft/${OP_USER}")
+        CURL_STATUS=$?
+        set -e
+        
+        if [ $CURL_STATUS -eq 0 ] && [ -n "$PROFILE" ] && [ "$PROFILE" != "null" ]; then
+            RAW_UUID=$(echo "$PROFILE" | jq -r '.id')
+            REAL_NAME=$(echo "$PROFILE" | jq -r '.name')
+            # Format raw UUID into standard 8-4-4-4-12 UUID format
+            FORMATTED_UUID=$(echo "$RAW_UUID" | sed -E 's/([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})/\1-\2-\3-\4-\5/')
+            
+            echo "[{\"uuid\":\"${FORMATTED_UUID}\",\"name\":\"${REAL_NAME}\",\"level\":4,\"bypassesPlayerLimit\":false}]" > "$INSTANCE_DIR/ops.json"
+            echo -e "${GREEN}[+] Set ${REAL_NAME} as operator in ops.json.${NC}"
+        else
+            echo -e "${YELLOW}Warning: Could not resolve Mojang profile for '${OP_USER}'. You will need to OP them manually in-game or via the console.${NC}"
+        fi
+    fi
 fi
 
 # 11. Systemd Service Configuration
@@ -376,6 +400,14 @@ if [[ "$START_SEL" =~ ^[yY]$ ]]; then
     echo -e "${BLUE}[*] Enabling and starting minecraft@${INSTANCE_NAME}...${NC}"
     systemctl enable "minecraft@${INSTANCE_NAME}"
     systemctl start "minecraft@${INSTANCE_NAME}"
+    
+    # If Bedrock and an operator username was provided, inject it via screen command
+    if [ "$TYPE" = "bedrock" ] && [ -n "$OP_USER" ]; then
+        echo -e "${BLUE}[*] Waiting 5 seconds for Bedrock server to initialize, then assigning operator...${NC}"
+        sleep 5
+        screen -p 0 -S "mc-${INSTANCE_NAME}" -X eval 'stuff "op '"${OP_USER}"'\015"'
+        echo -e "${GREEN}[+] Operator command sent to Bedrock console.${NC}"
+    fi
     
     echo -e "${GREEN}[+] Instance started. You can attach to the console with: sudo -u minecraft screen -r mc-${INSTANCE_NAME}${NC}"
 else
