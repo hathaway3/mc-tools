@@ -1,0 +1,41 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Log files and Temp files
+*.log
+/tmp/
+/temp/
+
+# Minecraft binaries & local testing folders
+*.jar
+*.zip
+/instances/
+/out/
+/bin/
+/lib/
+/libraries/
+/mods/
+/world/
+/logs/
+/config/
+eula.txt
+server.properties
+user_jvm_args.txt
+run.sh
+run.bat
+bedrock_server
+setup-repos.sh
+EOF
