@@ -63,7 +63,7 @@ fi
 read -rp "Enter Subdomain for Minecraft (default: mc, use @ for root domain): " SUBDOMAIN
 [ -z "$SUBDOMAIN" ] && SUBDOMAIN="mc"
 
-read -rp "Enter Minecraft Server Port (default: 25565): " PORT
+read -rp "Enter Minecraft Server External Port (the port mapped on your router that players use to connect, default: 25565): " PORT
 [ -z "$PORT" ] && PORT="25565"
 
 # 2. IP Address Resolution

@@ -148,6 +148,7 @@ If you use GoDaddy to manage your domain, you can use the secondary script [upda
    ./update-godaddy-dns.sh
    ```
 3. Enter your GoDaddy API credentials (API Key and Secret can be created at the [GoDaddy Developer Portal](https://developer.godaddy.com/keys)).
+4. Enter the domain, subdomain, and the **External Port (DNAT Port)** mapped on your router (players will connect to your server using this port).
 
 ---
 
