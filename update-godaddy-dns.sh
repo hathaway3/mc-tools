@@ -41,23 +41,49 @@ for cmd in curl jq; do
     fi
 done
 
+# Load environment variables from .env if it exists in the script's directory
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    echo -e "${BLUE}[*] Loading credentials from .env...${NC}"
+    # Temporarily disable unbound variable checking for sourcing
+    set +u
+    # shellcheck source=/dev/null
+    source "$SCRIPT_DIR/.env"
+    set -u
+fi
+
+# Initialize variables to safe defaults if not loaded from .env
+GD_KEY="${GD_KEY:-}"
+GD_SECRET="${GD_SECRET:-}"
+DOMAIN="${DOMAIN:-}"
+PROMPTED_CREDS="false"
+
 # 1. Credentials Prompts
-read -rp "Enter GoDaddy API Key: " GD_KEY
 if [ -z "$GD_KEY" ]; then
-    echo -e "${RED}API Key is required.${NC}"
-    exit 1
+    read -rp "Enter GoDaddy API Key: " GD_KEY
+    if [ -z "$GD_KEY" ]; then
+        echo -e "${RED}API Key is required.${NC}"
+        exit 1
+    fi
+    PROMPTED_CREDS="true"
 fi
 
-read -rp "Enter GoDaddy API Secret: " GD_SECRET
 if [ -z "$GD_SECRET" ]; then
-    echo -e "${RED}API Secret is required.${NC}"
-    exit 1
+    read -rp "Enter GoDaddy API Secret: " GD_SECRET
+    if [ -z "$GD_SECRET" ]; then
+        echo -e "${RED}API Secret is required.${NC}"
+        exit 1
+    fi
+    PROMPTED_CREDS="true"
 fi
 
-read -rp "Enter your Domain Name (e.g. example.com): " DOMAIN
 if [ -z "$DOMAIN" ]; then
-    echo -e "${RED}Domain name is required.${NC}"
-    exit 1
+    read -rp "Enter your Domain Name (e.g. example.com): " DOMAIN
+    if [ -z "$DOMAIN" ]; then
+        echo -e "${RED}Domain name is required.${NC}"
+        exit 1
+    fi
+    PROMPTED_CREDS="true"
 fi
 
 read -rp "Enter Subdomain for Minecraft (default: mc, use @ for root domain): " SUBDOMAIN
@@ -150,6 +176,22 @@ if [ "$SRV_RESPONSE" -eq 200 ] || [ "$SRV_RESPONSE" -eq 201 ]; then
 else
     echo -e "${RED}Error: Failed to update SRV Record. HTTP Code: $SRV_RESPONSE${NC}"
     exit 1
+fi
+
+# Save credentials if they were prompted and the update succeeded
+if [ "${PROMPTED_CREDS:-false}" = "true" ]; then
+    read -rp "Would you like to save these credentials to a local '.env' file for future runs? (y/N): " SAVE_CREDS
+    if [[ "$SAVE_CREDS" =~ ^[yY]$ ]]; then
+        touch "$SCRIPT_DIR/.env"
+        chmod 600 "$SCRIPT_DIR/.env"
+        cat << EOF > "$SCRIPT_DIR/.env"
+# GoDaddy API Credentials
+GD_KEY="$GD_KEY"
+GD_SECRET="$GD_SECRET"
+DOMAIN="$DOMAIN"
+EOF
+        echo -e "${GREEN}[+] Credentials saved to .env with secure permissions (chmod 600).${NC}"
+    fi
 fi
 
 # Disable cleanup trap before final success
