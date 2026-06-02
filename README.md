@@ -130,6 +130,27 @@ To close the console view without shutting down the Minecraft server:
 
 ---
 
+## Updating GoDaddy DNS (Optional)
+
+If you use GoDaddy to manage your domain, you can use the secondary script [update-godaddy-dns.sh](update-godaddy-dns.sh) to automatically map a subdomain (or root domain) and port configuration to your server's public IP address using A and SRV records.
+
+### How it works
+1. **A Record**: Maps your subdomain (e.g. `mc.yourdomain.com`) to the public IP of your VM.
+2. **SRV Record**: Maps the `_minecraft._tcp.mc` service definition to point to the A record on your Minecraft server's specific port. This enables players to connect with just `mc.yourdomain.com` without typing the port (even if running on a non-standard port!).
+
+### How to Run
+1. Make the script executable:
+   ```bash
+   chmod +x update-godaddy-dns.sh
+   ```
+2. Run the script:
+   ```bash
+   ./update-godaddy-dns.sh
+   ```
+3. Enter your GoDaddy API credentials (API Key and Secret can be created at the [GoDaddy Developer Portal](https://developer.godaddy.com/keys)).
+
+---
+
 ## License
 
 This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for the full license text.
