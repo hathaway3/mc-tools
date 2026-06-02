@@ -127,3 +127,9 @@ To close the console view without shutting down the Minecraft server:
 
 - **Vanilla Java & Older Forge**: Memory allocation is governed by the template file `/etc/systemd/system/minecraft@.service`. By default, it is configured with `-Xmx4G`.
 - **Modern Forge (1.17+)**: Memory is configured in the instance's directory within `/opt/minecraft/instances/<instance_name>/user_jvm_args.txt`. Open this file and adjust the `-Xmx4G` line.
+
+---
+
+## License
+
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for the full license text.
